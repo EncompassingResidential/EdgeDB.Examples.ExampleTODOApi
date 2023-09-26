@@ -1,0 +1,42 @@
+﻿using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
+
+namespace EdgeDB.Examples.ExampleTODOApi.Controllers
+{
+    public class TODOController : Controller
+    {
+        private readonly EdgeDBClient _client;
+
+        public TODOController(EdgeDBClient client)
+        {
+            _client = client;
+        }
+
+        [HttpGet("/todos")]
+        public async Task<IActionResult> GetTODOs()
+        {
+            var todos = await _client.QueryAsync<TODOModel>("select TODO { title, description, state, date_created }").ConfigureAwait(false);
+
+            return Ok(todos);
+        }
+
+
+        [HttpPost("/todos")]
+        public async Task<IActionResult> CreateTODO([FromBody] TODOModel todo)
+        {
+            // validate request
+            if (string.IsNullOrEmpty(todo.Title) || string.IsNullOrEmpty(todo.Description))
+                return BadRequest();
+
+            var query = "insert TODO { title := <str>$title, description := <str>$description, state := <State>$state }";
+            await _client.ExecuteAsync(query, new Dictionary<string, object?>
+            {
+                { "title",       todo.Title },
+                { "description", todo.Description},
+                { "state",       todo.State }
+            });
+
+            return NoContent();
+        }
+    }
+}

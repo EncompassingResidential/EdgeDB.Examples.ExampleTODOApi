@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.7.34024.191
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EdgeDB.Examples.ExampleTODOApi", "EdgeDB.Examples.ExampleTODOApi.csproj", "{0EEA50AE-FD9C-4552-848A-D3708FF577DA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{0EEA50AE-FD9C-4552-848A-D3708FF577DA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0EEA50AE-FD9C-4552-848A-D3708FF577DA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0EEA50AE-FD9C-4552-848A-D3708FF577DA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0EEA50AE-FD9C-4552-848A-D3708FF577DA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6FFF7934-047F-4972-8B49-2641E08D7341}
+	EndGlobalSection
+EndGlobal
