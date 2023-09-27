@@ -28,6 +28,14 @@ namespace EdgeDB.Examples.ExampleTODOApi.Controllers
             if (string.IsNullOrEmpty(todo.Title) || string.IsNullOrEmpty(todo.Description))
                 return BadRequest();
 
+            string queryStr = $"select TODO {{ title, description, state }} filter .title = '{todo.Title}'";
+
+            // Looking for duplicate title before posting to DB
+            var todos = await _client.QueryAsync<TODOModel>(queryStr).ConfigureAwait(false);
+
+            if (todos.Count() > 0)
+                return BadRequest("That Title already exists.");
+
             var query = "insert TODO { title := <str>$title, description := <str>$description, state := <State>$state }";
             await _client.ExecuteAsync(query, new Dictionary<string, object?>
             {

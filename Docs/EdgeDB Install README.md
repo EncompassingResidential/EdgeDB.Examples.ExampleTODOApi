@@ -625,3 +625,239 @@ As we can see our state was updated successfully.
 # Conclusion
 
 This tutorial has covered the basics of how to use the EdgeDB client to query, update and delete data. Feel free to expirement with the source code [here](https://github.com/quinchs/EdgeDB.Net/tree/dev/examples/EdgeDB.Examples.ExampleTODOApi).
+
+
+## Trying to add checking for duplicate before POSTing
+
+For code:
+
+            // Looking for duplicate title before posting to DB
+            var todos = await _client.QueryAsync<TODOModel>("select TODO filter .title = <str>$title { title, description }").ConfigureAwait(false);
+            if (todos.Count() > 1)
+                return BadRequest("That Title already exists.");
+
+
+EdgeDB returns this error:
+QueryError: missing a type cast before the parameter
+   |
+ 1 | select TODO filter .title = <str>$title { title, description }
+ 
+ 
+ With this input:
+{
+  "title": "Hello",
+  "description": "duplicate string 9/26 20:09",
+  "state": 0
+}
+            // Looking for duplicate title before posting to DB
+            var todos = await _client.QueryAsync<TODOModel>("select TODO { title, description } filter .title = <str>$title ").ConfigureAwait(false);
+            if (todos.Count() > 1)
+                return BadRequest("That Title already exists.");
+
+
+EdgeDB flips a bit and dies :
+
+EdgeDB.EdgeDBException: Failed to execute query
+
+ ---> System.ArgumentException: Expected dynamic object or array but got null
+
+   at EdgeDB.Binary.Codecs.ObjectCodec.Serialize(PacketWriter& writer, Object value, CodecContext context)
+
+   at EdgeDB.Binary.Codecs.ObjectCodec.SerializeArguments(PacketWriter& writer, Object value, CodecContext context)
+
+   at EdgeDB.Binary.Codecs.BaseArgumentCodec`1.EdgeDB.Binary.Codecs.IArgumentCodec.SerializeArguments(PacketWriter& writer, Object value, CodecContext context)
+
+   at EdgeDB.CodecExtensions.SerializeArguments(IArgumentCodec codec, EdgeDBBinaryClient client, Object value)
+
+   at EdgeDB.EdgeDBBinaryClient.ExecuteInternalAsync(String query, IDictionary`2 args, Nullable`1 cardinality, Nullable`1 capabilities, IOFormat format, Boolean isRetry, Boolean implicitTypeName, CancellationToken token)
+
+   --- End of inner exception stack trace ---
+
+   at EdgeDB.EdgeDBBinaryClient.ExecuteInternalAsync(String query, IDictionary`2 args, Nullable`1 cardinality, Nullable`1 capabilities, IOFormat format, Boolean isRetry, Boolean implicitTypeName, CancellationToken token)
+
+   at EdgeDB.EdgeDBBinaryClient.QueryAsync[TResult](String query, IDictionary`2 args, Nullable`1 capabilities, CancellationToken token)
+
+   at EdgeDB.EdgeDBClient.QueryAsync[TResult](String query, IDictionary`2 args, Nullable`1 capabilities, CancellationToken token)
+
+   at EdgeDB.EdgeDBClient.QueryAsync[TResult](String query, IDictionary`2 args, Nullable`1 capabilities, CancellationToken token)
+
+   at EdgeDB.Examples.ExampleTODOApi.Controllers.TODOController.CreateTODO(TODOModel todo) in C:\repos\edgedb-projects\EdgeDB.Examples.ExampleTODOApi\Controllers\TODOController.cs:line 32
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Awaited|12_0(ControllerActionInvoker invoker, ValueTask`1 actionResultValueTask)
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+
+--- End of stack trace from previous location ---
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+
+   at Microsoft.AspNetCore.Routing.EndpointMiddleware.<Invoke>g__AwaitRequestTask|6_0(Endpoint endpoint, Task requestTask, ILogger logger)
+
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+
+   at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+
+   at Microsoft.AspNetCore.Diagnostics.DeveloperExceptionPageMiddlewareImpl.Invoke(HttpContext context)
+
+
+
+HEADERS
+
+=======
+
+Accept: */*
+
+Host: localhost:7093
+
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0
+
+Accept-Encoding: gzip, deflate, br
+
+Accept-Language: en-US,en;q=0.5
+
+Content-Type: application/json
+
+Origin: https://localhost:7093
+
+Referer: https://localhost:7093/swagger/index.html
+
+TE: trailers
+
+Content-Length: 73
+
+sec-fetch-dest: empty
+
+sec-fetch-mode: cors
+
+sec-fetch-site: same-origin
+
+
+ With this input:
+{
+  "title": "Hello",
+  "description": "duplicate string 9/26 20:18",
+  "state": 0
+}
+
+QueryError: missing a type cast before the parameter
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>$todo.title
+   |                                                                ^^^^^
+ 
+ 
+EdgeQLSyntaxError: Unexpected ':'
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>$todo:title
+ 
+ 
+EdgeQLSyntaxError: 
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>$todo.Title
+ 
+ 
+QueryError: missing a type cast before the parameter
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>$todo.Title
+   |                                                                ^^^^^
+
+InvalidReferenceError: object type or alias 'default::Title' does not exist
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>Title
+   |                                                                ^^^^^
+Hint: did you mean '.title'?
+
+
+InvalidReferenceError: object type or alias 'default::title' does not exist
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>title
+   |                                                                ^^^^^
+Hint: did you mean '.title'?
+
+
+InvalidReferenceError: object type or alias 'default::todo' does not exist
+   |
+ 1 | select TODO { title, description, state } filter .title = todo.title
+   |                                                           ^^^^
+
+InvalidReferenceError: object type or alias 'default::todo' does not exist
+   |
+ 1 | select TODO { title, description, state } filter .title = todo.title
+   |                                                           ^^^^
+
+ With this input:
+{
+  "title": "Hello",
+  "description": "duplicate string 9/27 08:38",
+  "state": 1
+}
+
+InvalidReferenceError: object type or alias 'default::todo' does not exist
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>todo.title
+   |                                                                ^^^^
+
+
+QueryError: missing a type cast before the parameter
+   |
+ 1 | select TODO { title, description, state } filter .title = <str>$todo.title
+   |                                                                ^^^^^
+
+
+I can't figure out where Console.Write is outputing?
+
+I think this is working
+            var todos = await _client.QueryAsync<TODOModel>("select TODO { title, description, state } filter .title = '{todo.Title}'").ConfigureAwait(false);
+
+but it's not finding the other Hello titles.
+
+            if (todos.Count() > 1)
+                return BadRequest("That Title already exists.");
+
+
+I just saw that VS is running a command prompt which has the output:
+Console.Write("todo.Title {todo.Title} todo.Description {todo.Description}");
+
+ChatGPT manual steps:
+Open up a command prompt
+cd to project base
+dotnet run
+Open a browser manually and run:
+https://localhost:7093/swagger/index.html
+
+didn't seem to work several times. (look up in project where Port is ...? 7093 ? )
+Then once it started to bring up the Swagger www UI but then didn't complete.
+
+tried the ChatGPT default URL
+https://localhost:5001/swagger/index.html
+didn't work at all.
+
+
+ With this input:
+{
+  "title": "Hello",
+  "description": "duplicate string 9/27 09:12",
+  "state": 1
+}
+
+            var todos = await _client.QueryAsync<TODOModel>("select TODO { title, description, state } filter .title = '{todo.Title}'").ConfigureAwait(false);
+
+
+todo.Title {todo.Title} todo.Description {todo.Description}
+
+todo.Title Hello todo.Description duplicate string 9/27 08:55
