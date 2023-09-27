@@ -861,3 +861,156 @@ didn't work at all.
 todo.Title {todo.Title} todo.Description {todo.Description}
 
 todo.Title Hello todo.Description duplicate string 9/27 08:55
+
+Updated schema C:\repos\edgedb-projects\EdgeDB.Examples.ExampleTODOApi\dbschema\default.esdl
+to have 
+unique (exculsive) title's 
+minimum title length of 8 characters.
+
+        required property title -> str {
+            constraint exclusive;
+            constraint min_len_value(8);
+        }
+
+
+PS C:\repos\edgedb-projects\EdgeDB.Examples.ExampleTODOApi> edgedb migration create
+Connecting to EdgeDB instance at localhost:10701...
+did you alter property 'title' of object type 'default::TODO'? [y,n,l,c,b,s,q,?]
+> y
+Created C:\repos\edgedb-projects\EdgeDB.Examples.ExampleTODOApi\dbschema\migrations\00002.edgeql, id: m1yem2i2f6e2v6occd5x5dhmcyxhayokdbsvtk64rmceypp2okpvvq
+
+PS C:\repos\edgedb-projects\EdgeDB.Examples.ExampleTODOApi> edgedb migration apply
+Connecting to EdgeDB instance at localhost:10701...
+edgedb error: ConstraintViolationError: title violates exclusivity constraint
+  Detail: property 'title' of object type 'default::TODO' violates exclusivity constraint
+edgedb error: error in one of the migrations
+
+In http://localhost:10701/ui/edgedb/editor
+
+DELETE TODO FILTER .title LIKE 'Hello'
+      AND .description LIKE 'duplicate%';
+
+
+SELECT TODO { id, title, description, state, date_created }
+FILTER .title LIKE 'Hello 09:15'
+  AND datetime_get(.date_created, 'hour') = 6 
+  AND datetime_get(.date_created, 'minutes') IN { 12, 13 };
+
+DELETE TODO
+FILTER .title LIKE 'Hello 09:15'
+  AND datetime_get(.date_created, 'hour') = 6 
+  AND datetime_get(.date_created, 'minutes') IN { 12 };
+
+
+PS C:\repos\edgedb-projects\EdgeDB.Examples.ExampleTODOApi> edgedb migration apply
+Connecting to EdgeDB instance at localhost:10701...
+edgedb error: ConstraintViolationError: title must be no shorter than 8 characters.
+  Detail: `property 'title' of object type 'default`::`TODO'` must be no shorter than 8 characters.
+edgedb error: error in one of the migrations
+
+UPDATE TODO FILTER .title = 'Hello' SET { title := "Hello 78" }
+UPDATE TODO FILTER .title = 'Hello 6' SET { title := "Hello 68" }
+
+PS C:\repos\edgedb-projects\EdgeDB.Examples.ExampleTODOApi> edgedb migration apply
+Connecting to EdgeDB instance at localhost:10701...
+Applied m1yem2i2f6e2v6occd5x5dhmcyxhayokdbsvtk64rmceypp2okpvvq (00002.edgeql)
+
+{
+  "title": "Hello",
+  "description": "duplicate string 9/27 09:12",
+  "state": 1
+}
+
+curl -X 'POST' \
+  'https://localhost:7093/todos' \
+  -H 'accept: */*' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "title": "Hello",
+  "description": "duplicate string 9/27 11:30",
+  "state": 2
+
+}'
+
+Response body
+ConstraintViolationError: title must be no shorter than 8 characters.
+
+HEADERS
+=======
+
+Accept: */*
+Host: localhost:7093
+User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/118.0
+Accept-Encoding: gzip, deflate, br
+Accept-Language: en-US,en;q=0.5
+Content-Type: application/json
+Origin: https://localhost:7093
+Referer: https://localhost:7093/swagger/index.html
+TE: trailers
+Content-Length: 85
+sec-fetch-dest: empty
+sec-fetch-mode: cors
+sec-fetch-site: same-origin
+
+
+Response headers
+
+ content-type: text/plain; charset=utf-8  date: Wed,27 Sep 2023 18:30:18 GMT  server: Kestrel  x-firefox-spdy: h2 
+ 
+{
+  "title": "Hello 68",
+  "description": "duplicate string 9/27 11:30",
+  "state": 3
+}
+
+Response 500 - InvalidValueError: invalid input value for enum 'default::State': "3"
+
+
+{
+  "title": "Hello 68",
+  "description": "duplicate string 9/27 11:30",
+  "state": 0
+}
+
+Response 500 - ConstraintViolationError: title violates exclusivity constraint
+
+
+{
+  "title": "Hello 88",
+  "description": "duplicate string 9/27 11:34",
+  "state": 0
+}
+
+Response headers for Code 204 response
+
+ date: Wed,27 Sep 2023 18:34:22 GMT  server: Kestrel  x-firefox-spdy: h2 
+
+{
+  "title": "Hello 88",
+  "description": "duplicate string 9/27 11:35",
+  "state": 1
+}
+
+Response 500 - ConstraintViolationError: title violates exclusivity constraint
+
+{
+  "title": "Hello 99",
+  "description": "duplicate string 9/27 11:35",
+  "state": 4
+}
+
+
+Error: response status is 500
+
+InvalidValueError: invalid input value for enum 'default::State': "4"
+
+{
+  "title": "Hello 99",
+  "description": "duplicate string 9/27 11:38",
+  "state": 1
+}
+
+Response headers for Code 204 response
+
+ content-type: text/plain; charset=utf-8  date: Wed,27 Sep 2023 18:38:20 GMT  server: Kestrel  x-firefox-spdy: h2 
+
