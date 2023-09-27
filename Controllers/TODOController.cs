@@ -38,5 +38,24 @@ namespace EdgeDB.Examples.ExampleTODOApi.Controllers
 
             return NoContent();
         }
+
+        [HttpDelete("/todos")]
+        public async Task<IActionResult> DeleteTODO([FromQuery, Required] string title)
+        {
+            var result = await _client.QueryAsync<object>("delete TODO filter .title = <str>$title", new Dictionary<string, object?> { { "title", title } });
+
+            return result.Count > 0 ? NoContent() : NotFound();
+        }
+
+        [HttpPatch("/todos")]
+        public async Task<IActionResult> UpdateTODO([FromQuery, Required] string title, [FromQuery, Required] TODOState state)
+        {
+            var result = await _client.QueryAsync<object>("update TODO filter .title = <str>$title set { state := <State>$state }", new Dictionary<string, object?>
+            {
+                { "title", title } ,
+                { "state", state }
+            });
+            return result.Count > 0 ? NoContent() : NotFound();
+        }
     }
 }
