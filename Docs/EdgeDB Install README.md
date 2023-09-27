@@ -441,6 +441,16 @@ GET /todos
 ]
 ```
 
+To see the EdgeDB contents, From command prompt typed in:
+edgedb ui
+
+to bring up the EdgeDB www interface :
+http://localhost:10701/ui/edgedb/editor
+
+from the Query Editor typed in (luckily it autocompletes all the field names) :
+SELECT TODO { date_created, description, id, state, title };
+
+
 Here we can see our todo was created successfully as well as returned from our api successfully. Lets next add a route to delete todos.
 
 ```diff
@@ -494,6 +504,12 @@ namespace EdgeDB.Examples.ExampleTODOApi.Controllers
     }
 } 
 ```
+
+{
+  "title": "string 444",
+  "description": "string 9/26 17:40",
+  "state": 1
+}
 
 Our delete route will take in a title as a query parameter and delete the todo with that title. Note that we're using the `QueryAsync` method here with an `object` as the return type so we can count how many todos were deleted, then returning 204 if we deleted at least one todo, and 404 if we didn't.
 
